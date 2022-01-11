@@ -8,40 +8,13 @@ function book_menu()
   $item = array();
 
   $item['api/v1/books'] = array(
-    'title' => 'Books',
-    'description' => 'list data of books',
-    'page callback' => 'book_all',
+    'page callback' => 'process_book_request',
     'access callback' => TRUE,
   );
 
   $item['api/v1/books/%'] = array(
-    'title' => 'Books',
-    'description' => 'data of a book',
-    'page callback' => 'book_index',
+    'page callback' => 'process_book_request',
     'page arguments' => array(3),
-    'access callback' => TRUE,
-  );
-
-  $item['api/v1/books/%'] = array(
-    'title' => 'Books',
-    'description' => 'data of a book',
-    'page callback' => 'book_delete',
-    'page arguments' => array(4),
-    'access callback' => TRUE,
-  );
-
-  $item['api/v1/books'] = array(
-    'title' => 'Books',
-    'description' => 'data of a book',
-    'page callback' => 'book_create',
-    'access callback' => TRUE,
-  );
-
-  $item['api/v1/books/%'] = array(
-    'title' => 'Books',
-    'description' => 'data of a book',
-    'page callback' => 'book_update',
-    'page arguments' => array(4),
     'access callback' => TRUE,
   );
 
@@ -49,9 +22,30 @@ function book_menu()
 }
 
 /**
+ * process functions by method
+ */
+function process_book_request($nid)
+{
+  switch (strtoupper($_SERVER['REQUEST_METHOD']))
+  {
+    case 'GET':
+      if($nid) book_index($nid);
+      else book_all();
+    break;
+    case 'POST':
+      if(isset($nid)) book_update($nid);
+      else book_create();
+    break;
+    case 'DELETE':
+      book_delete($nid);
+    break;
+  }
+}
+
+/**
  * selecting a book by nid
  */
-function book_index($args = '')
+function book_index($args)
 {
   $query = new EntityFieldQuery();
   $query->entityCondition('entity_type', 'node')
