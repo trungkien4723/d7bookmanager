@@ -1,0 +1,4 @@
+core = 7.x
+description = author api
+name = author api
+package = bookmanagerapi

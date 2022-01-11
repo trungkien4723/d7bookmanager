@@ -1,0 +1,71 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+function book_menu()
+{
+  $item = array();
+
+  $item['api/v1/books'] = array(
+    'title' => 'Books',
+    'description' => 'list data of books',
+    'page callback' => 'book_all',
+    'access callback' => TRUE,
+  );
+
+  $item['api/v1/books/%'] = array(
+    'title' => 'Books',
+    'description' => 'data of a book',
+    'page callback' => 'book_index',
+    'page arguments' => array(3),
+    'access callback' => TRUE,
+  );
+
+  $item['api/v1/books/delete/%'] = array(
+    'title' => 'Books',
+    'description' => 'data of a book',
+    'page callback' => 'book_delete',
+    'page arguments' => array(4),
+    'access callback' => TRUE,
+  );
+
+  return $item;
+}
+
+/**
+ * selecting a book by nid
+ */
+function book_index($args = '')
+{
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'node')
+    ->entityCondition('bundle', 'book')
+    ->propertyCondition('status', 1)
+    ->propertyCondition('nid', $args);
+  $result = $query->execute();
+  if (isset($result['node'])) {
+    $items_nids = array_keys($result['node']);
+    $items = entity_load('node', $items_nids);
+    drupal_json_output($items);
+  }
+}
+
+/**
+ * selecting all books
+ */
+function book_all()
+{
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'node')
+    ->entityCondition('bundle', 'book')
+    ->range(0, 4)
+    ->propertyCondition('status', 1);
+
+  $result = $query->execute();
+  if (isset($result['node'])) {
+    $items_nids = array_keys($result['node']);
+    $items = entity_load('node', $items_nids);
+    drupal_json_output($items);
+  }
+}
