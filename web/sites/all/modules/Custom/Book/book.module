@@ -22,10 +22,25 @@ function book_menu()
     'access callback' => TRUE,
   );
 
-  $item['api/v1/books/delete/%'] = array(
+  $item['api/v1/books/%'] = array(
     'title' => 'Books',
     'description' => 'data of a book',
     'page callback' => 'book_delete',
+    'page arguments' => array(4),
+    'access callback' => TRUE,
+  );
+
+  $item['api/v1/books'] = array(
+    'title' => 'Books',
+    'description' => 'data of a book',
+    'page callback' => 'book_create',
+    'access callback' => TRUE,
+  );
+
+  $item['api/v1/books/%'] = array(
+    'title' => 'Books',
+    'description' => 'data of a book',
+    'page callback' => 'book_update',
     'page arguments' => array(4),
     'access callback' => TRUE,
   );
@@ -68,4 +83,60 @@ function book_all()
     $items = entity_load('node', $items_nids);
     drupal_json_output($items);
   }
+}
+
+/**
+ * create a book
+ */
+function book_create()
+{
+  $node = new stdClass();
+  $node->type = 'book';
+  node_object_prepare($node);
+  $node->language = LANGUAGE_NONE;
+  $node->status = 1;
+  $node->promote = 0;
+  $node->comment = 2;
+  $node->title = 'test create book';
+
+  $description = "this is a test description";
+  $node->field_description[$node->language][]['value'] = $description;
+
+  $node->field_categories[$node->language][]['tid'] = 2;
+  $node->field_author[$node->language][]['tid'] = 1;
+  $node->	field_publisher[$node->language][]['tid'] = 4;
+  $node->field_published_year[$node->language][]['tid'] = 7;
+  $node = node_submit($node);
+  node_save($node);
+  drupal_json_output($node);
+}
+
+/**
+ * edit infomations of a book
+ */
+function book_update($nid)
+{
+  $node = node_load($nid);
+  node_object_prepare($node);
+
+  $node->title = 'test create book';
+
+  $description = "this is a edited test description";
+  $node->field_description[$node->language][0]['value'] = $description;
+
+  $node->field_categories[$node->language][0]['tid'] = 2;
+  $node->field_author[$node->language][0]['tid'] = 5;
+  $node->	field_publisher[$node->language][0]['tid'] = 4;
+  $node->field_published_year[$node->language][0]['tid'] = 7;
+  $node = node_submit($node);
+  node_save($node);
+  drupal_json_output($node);
+}
+
+/**
+ * delete a book
+ */
+function book_delete($nid)
+{
+  node_delete($nid);
 }
