@@ -120,7 +120,7 @@ function book_update($nid)
 
   $node->field_categories[$node->language][0]['tid'] = 2;
   $node->field_author[$node->language][0]['tid'] = 5;
-  $node->	field_publisher[$node->language][0]['tid'] = 4;
+  $node->field_publisher[$node->language][0]['tid'] = 4;
   $node->field_published_year[$node->language][0]['tid'] = 7;
   $node = node_submit($node);
   node_save($node);
