@@ -67,7 +67,33 @@ function book_index($nid)
 function book_all()
 {
   $nodes = node_load_multiple(array(), array('type' => 'book'));
-  drupal_json_output($nodes);
+  $items_per_page = 2;
+  $total = count($nodes);
+  $current_page = pager_default_initialize($total,$items_per_page);
+  $chunks = array_chunk($nodes, $items_per_page);
+  $current_items = $chunks[$current_page];
+  $current_path = url(current_path(), array('absolute' => true));
+  $previous_page = $current_page - 1 < 0 ? null : $current_path . '?page=' . ($current_page - 1);
+  $next_page = $current_path . '?page=' . ($current_page + 1);
+
+  $data = array(
+    'meta' => array(
+      'pagination' => array(
+        'total' => $total,
+        'pages' => count($chunks),
+        'page' => $current_page,
+        'limit' => $items_per_page,
+        'links' => array(
+          'previous' => $previous_page,
+          'current' => $current_path . '?page=' .$current_page,
+          'next' => $next_page,
+        ),
+      )
+    ),
+    'data' => $current_items,
+  );
+
+  drupal_json_output($data);
 }
 
 /**
