@@ -66,8 +66,18 @@ function book_index($nid)
  */
 function book_all()
 {
-  $nodes = node_load_multiple(array(), array('type' => 'book'));
-  $items_per_page = 2;
+  $nodes = array();
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'node')
+    ->entityCondition('bundle', 'book')
+    ->propertyCondition('status', 1);
+  $result = $query->execute();
+  if (isset($result['node'])) {
+    $items_nids = array_keys($result['node']);
+    $nodes = node_load_multiple($items_nids);
+  }
+
+  $items_per_page = 20;
   $total = count($nodes);
   $current_page = pager_default_initialize($total,$items_per_page);
   $chunks = array_chunk($nodes, $items_per_page);
