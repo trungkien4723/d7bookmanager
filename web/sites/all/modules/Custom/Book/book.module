@@ -67,22 +67,26 @@ function book_index($nid)
 function book_all()
 {
   $nodes = array();
+  $node_datas = array();
   $items_per_page = 20;
-  $current_page = intval($_GET['page'] + 1);
+  $current_page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
   $query = new EntityFieldQuery();
   $query->entityCondition('entity_type', 'node')
     ->entityCondition('bundle', 'book')
     ->propertyCondition('status', 1);
 
-  $tmp = clone $query; $total = intval($tmp->count()->execute());
-  $result = $query->range(($current_page - 2) * $items_per_page ,$items_per_page)->execute();
+  $clone_query = clone $query; $total = intval($clone_query->count()->execute());
+  $result = $query->range(($current_page - 1) * $items_per_page ,$items_per_page)->execute();
   if (isset($result['node'])) {
     $items_nids = array_keys($result['node']);
     $nodes = node_load_multiple($items_nids);
+    foreach ($nodes as $item){
+      array_push($node_datas, $item);
+    }
   }
 
   $current_path = url(current_path(), array('absolute' => true));
-  $previous_page = $current_page - 2 <= 0 ? null : $current_path . '?page=' . ($current_page - 2);
+  $previous_page = $current_page - 1 <= 0 ? null : $current_path . ($current_page > 2 ? '?page=' . ($current_page - 1) : '');
   $next_page = $current_path . '?page=' . ($current_page + 1);
 
   $data = array(
@@ -94,12 +98,12 @@ function book_all()
         'limit' => $items_per_page,
         'links' => array(
           'previous' => $previous_page,
-          'current' => $current_path . '?page=' .$current_page,
+          'current' => $current_path . ($current_page > 1 ? '?page=' . $current_page : ''),
           'next' => $next_page,
         ),
       )
     ),
-    'data' => $nodes,
+    'data' => $node_datas,
   );
 
   drupal_json_output($data);
@@ -148,7 +152,6 @@ function book_update($nid)
     $node->field_author[$node->language][0]['tid'] = 5;
     $node->field_publisher[$node->language][0]['tid'] = 4;
     $node->field_published_year[$node->language][0]['tid'] = 7;
-    $node = node_submit($node);
     node_save($node);
     drupal_json_output($node);
   }
