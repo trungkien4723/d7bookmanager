@@ -66,8 +66,43 @@ function book_index($nid)
  */
 function book_all()
 {
-  $nodes = node_load_multiple(array(), array('type' => 'book'));
-  drupal_json_output($nodes);
+  $nodes = array();
+  $items_per_page = 20;
+  $current_page = intval($_GET['page'] + 1);
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'node')
+    ->entityCondition('bundle', 'book')
+    ->propertyCondition('status', 1);
+
+  $tmp = clone $query; $total = intval($tmp->count()->execute());
+  $result = $query->range(($current_page - 2) * $items_per_page ,$items_per_page)->execute();
+  if (isset($result['node'])) {
+    $items_nids = array_keys($result['node']);
+    $nodes = node_load_multiple($items_nids);
+  }
+
+  $current_path = url(current_path(), array('absolute' => true));
+  $previous_page = $current_page - 2 <= 0 ? null : $current_path . '?page=' . ($current_page - 2);
+  $next_page = $current_path . '?page=' . ($current_page + 1);
+
+  $data = array(
+    'meta' => array(
+      'pagination' => array(
+        'total' => $total,
+        'pages' => floor($total / $items_per_page),
+        'page' => $current_page,
+        'limit' => $items_per_page,
+        'links' => array(
+          'previous' => $previous_page,
+          'current' => $current_path . '?page=' .$current_page,
+          'next' => $next_page,
+        ),
+      )
+    ),
+    'data' => $nodes,
+  );
+
+  drupal_json_output($data);
 }
 
 /**
