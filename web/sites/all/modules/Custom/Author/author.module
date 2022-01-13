@@ -1,0 +1,50 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+function author_menu()
+{
+  $item = array();
+
+  $item['api/v1/authors/add'] = array(
+    'title' => 'Add author',
+    'description' => 'create author info form',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('author_form'),
+    'access callback' => true
+  );
+
+  return $item;
+}
+
+/**
+ * Implements hook_form().
+ */
+function author_form($node, &$form_state)
+{
+  $header = array(
+    'name' => t('Name'),
+  );
+  $form['name'] = array(
+    '#type' => 'tableselect',
+    'header' => $header,
+    '#title' => 'name',
+    '#size' => 50,
+    '#maxlength' => 50,
+    '#required' => TRUE,
+  );
+
+  $form['submit_button'] = array(
+    '#type' => 'submit',
+    '#value' => t('Add'),
+  );
+
+  return $form;
+}
+
+function author_form_validate($form, &$form_state) {
+}
+
+function author_form_submit($form, &$form_state) {
+}

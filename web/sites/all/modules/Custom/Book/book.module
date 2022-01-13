@@ -1,0 +1,181 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+function book_menu()
+{
+  $item = array();
+
+  $item['api/v1/books'] = array(
+    'page callback' => 'process_books_request',
+    'access callback' => TRUE,
+  );
+
+  $item['api/v1/books/%'] = array(
+    'page callback' => 'process_book_request',
+    'page arguments' => array(3),
+    'access callback' => TRUE,
+  );
+
+  return $item;
+}
+
+/**
+ * process functions by method
+ */
+function process_book_request($nid){
+  switch (strtoupper($_SERVER['REQUEST_METHOD'])){
+    case 'GET':
+      book_index($nid);
+    break;
+    case 'POST':
+      book_update($nid);
+    break;
+    case 'DELETE':
+      book_delete($nid);
+    break;
+  }
+}
+
+/**
+ * process functions by method
+ */
+function process_books_request(){
+  switch (strtoupper($_SERVER['REQUEST_METHOD'])){
+    case 'GET':
+      book_all();
+    break;
+    case 'POST':
+      book_create();
+    break;
+  }
+}
+
+/**
+ * selecting a book by nid
+ */
+function book_index($nid)
+{
+  $node = node_load($nid);
+  drupal_json_output($node);
+}
+
+/**
+ * selecting all books
+ */
+function book_all()
+{
+  $nodes = node_load_multiple(array(), array('type' => 'book'));
+  drupal_json_output($nodes);
+}
+
+/**
+ * create a book
+ */
+function book_create()
+{
+  $node = new stdClass();
+  $node->type = 'book';
+  node_object_prepare($node);
+  $node->language = LANGUAGE_NONE;
+  $node->status = 1;
+  $node->promote = 0;
+  $node->comment = 2;
+  $node->title = 'test create book';
+
+  $description = "this is a test description";
+  $node->field_description[$node->language][]['value'] = $description;
+
+  $node->field_categories[$node->language][]['tid'] = 2;
+  $node->field_author[$node->language][]['tid'] = 1;
+  $node->field_publisher[$node->language][]['tid'] = 4;
+  $node->field_published_year[$node->language][]['tid'] = 7;
+  node_save($node);
+  drupal_json_output($node);
+}
+
+/**
+ * edit infomations of a book
+ */
+function book_update($nid)
+{
+  $node = node_load($nid);
+
+  if($node)
+  {
+    $node->title = 'test create book';
+
+    $description = "this is a edited test description";
+    $node->field_description[$node->language][0]['value'] = $description;
+
+    $node->field_categories[$node->language][0]['tid'] = 2;
+    $node->field_author[$node->language][0]['tid'] = 5;
+    $node->field_publisher[$node->language][0]['tid'] = 4;
+    $node->field_published_year[$node->language][0]['tid'] = 7;
+    $node = node_submit($node);
+    node_save($node);
+    drupal_json_output($node);
+  }
+  else{print_r("Item not exists");}
+}
+
+/**
+ * delete a book
+ */
+function book_delete($nid)
+{
+  $node = node_load($nid);
+  if($node){
+    node_delete($nid);
+    drupal_json_output($node);
+  }
+  else{print_r("Item not exists");}
+}
+
+//Look better!
+//function book_index($nid)
+//{
+//  $node = node_load($nid);
+//  $categories = array();
+//  foreach ($node->field_categories[$node->language] as $key => $items){
+//    array_push($categories, taxonomy_term_load($items['tid'])->name);
+//  }
+//  $publisher = taxonomy_term_load($node->field_publisher[$node->language][0]['tid'])->name;
+//  $publishedyear = taxonomy_term_load($node->field_published_year[$node->language][0]['tid'])->name;
+//  $json = array(
+//    'Id' => $node->nid,
+//    'Title' => $node->title,
+//    'Categories' => $categories,
+//    'Publisher' => $publisher,
+//    'Published year' => $publishedyear,
+//  );
+//  drupal_json_output($json);
+//}
+//
+///**
+// * selecting all books
+// */
+//function book_all()
+//{
+//  $nodes = node_load_multiple(array(), array('type' => 'book'));
+//  $datas = array();
+//  foreach ($nodes as $key => $node)
+//  {
+//    $categories = array();
+//    foreach ($node->field_categories[$node->language] as $key => $items){
+//      array_push($categories, taxonomy_term_load($items['tid'])->name);
+//    }
+//    $publisher = taxonomy_term_load($node->field_publisher[$node->language][0]['tid'])->name;
+//    $publishedyear = taxonomy_term_load($node->field_published_year[$node->language][0]['tid'])->name;
+//    $json = array(
+//      'Id' => $node->nid,
+//      'Title' => $node->title,
+//      'Categories' => $categories,
+//      'Publisher' => $publisher,
+//      'Published year' => $publishedyear,
+//    );
+//    array_push($datas, $json);
+//  }
+//  drupal_json_output($datas);
+//}
