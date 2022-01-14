@@ -138,23 +138,35 @@ function book_create()
  */
 function book_update($nid)
 {
-  $node = node_load($nid);
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'node')
+    ->entityCondition('bundle', 'book')
+    ->propertyCondition('nid', $nid);
+  $result = $query->execute();
+  if (isset($result['node'])) {
+    $items_nids = array_keys($result['node']);
+    $node = node_load($items_nids[0]);
+    if($node)
+    {
+      $node->title = 'test update book';
 
-  if($node)
-  {
-    $node->title = 'test create book';
+      $description = "this is a edited test description";
+      $node->field_description[$node->language][0]['value'] = $description;
 
-    $description = "this is a edited test description";
-    $node->field_description[$node->language][0]['value'] = $description;
-
-    $node->field_categories[$node->language][0]['tid'] = 2;
-    $node->field_author[$node->language][0]['tid'] = 5;
-    $node->field_publisher[$node->language][0]['tid'] = 4;
-    $node->field_published_year[$node->language][0]['tid'] = 7;
-    node_save($node);
-    drupal_json_output($node);
+      $node->field_categories[$node->language][0]['tid'] = 2;
+      $node->field_author[$node->language][0]['tid'] = 5;
+      $node->field_publisher[$node->language][0]['tid'] = 4;
+      $node->field_published_year[$node->language][0]['tid'] = 7;
+      node_save($node);
+      drupal_json_output($node);
+    }
+    else{print_r("Item not exists");}
   }
-  else{print_r("Item not exists");}
+  else{
+    print_r("Item is not included in book type ");
+  }
+
+
 }
 
 /**
@@ -170,7 +182,6 @@ function book_delete($nid)
   if (isset($result['node'])) {
     $items_nids = array_keys($result['node']);
     $node = node_load($items_nids[0]);
-    drupal_json_output($node);
     if($node)
     {
       drupal_json_output($node);
