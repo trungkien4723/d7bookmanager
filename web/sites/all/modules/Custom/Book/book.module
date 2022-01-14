@@ -116,7 +116,6 @@ function book_create()
 {
   $node = new stdClass();
   $node->type = 'book';
-  node_object_prepare($node);
   $node->language = LANGUAGE_NONE;
   $node->status = 1;
   $node->promote = 0;
