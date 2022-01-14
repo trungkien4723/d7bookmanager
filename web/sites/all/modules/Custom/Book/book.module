@@ -163,12 +163,25 @@ function book_update($nid)
  */
 function book_delete($nid)
 {
-  $node = node_load($nid);
-  if($node){
-    node_delete($nid);
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'node')
+    ->entityCondition('bundle', 'book')
+    ->propertyCondition('nid', $nid);
+  $result = $query->execute();
+  if (isset($result['node'])) {
+    $items_nids = array_keys($result['node']);
+    $node = node_load($items_nids[0]);
     drupal_json_output($node);
+    if($node)
+    {
+      drupal_json_output($node);
+      node_delete($items_nids);
+    }
+    else{print_r("Item not exists");}
   }
-  else{print_r("Item not exists");}
+  else{
+    print_r("Item is not included in book type ");
+  }
 }
 
 //Look better!
