@@ -67,22 +67,19 @@ function book_index($nid)
 function book_all()
 {
   $nodes = array();
-  $node_datas = array();
   $items_per_page = 20;
-  $current_page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+  $current_page = isset($_GET['page']) ? $_GET['page'] : 1;
   $query = new EntityFieldQuery();
   $query->entityCondition('entity_type', 'node')
     ->entityCondition('bundle', 'book')
     ->propertyCondition('status', 1);
 
-  $clone_query = clone $query; $total = intval($clone_query->count()->execute());
+  $clone_query = clone $query;
+  $total = intval($clone_query->count()->execute());
   $result = $query->range(($current_page - 1) * $items_per_page ,$items_per_page)->execute();
   if (isset($result['node'])) {
     $items_nids = array_keys($result['node']);
     $nodes = node_load_multiple($items_nids);
-    foreach ($nodes as $item){
-      array_push($node_datas, $item);
-    }
   }
 
   $current_path = url(current_path(), array('absolute' => true));
@@ -103,7 +100,7 @@ function book_all()
         ),
       )
     ),
-    'data' => $node_datas,
+    'data' => array($nodes),
   );
 
   drupal_json_output($data);
@@ -123,12 +120,12 @@ function book_create()
   $node->title = 'test create book';
 
   $description = "this is a test description";
-  $node->field_description[$node->language][]['value'] = $description;
+  $node->field_description[$node->language][0]['value'] = $description;
 
-  $node->field_categories[$node->language][]['tid'] = 2;
-  $node->field_author[$node->language][]['tid'] = 1;
-  $node->field_publisher[$node->language][]['tid'] = 4;
-  $node->field_published_year[$node->language][]['tid'] = 7;
+  $node->field_categories[$node->language][0]['tid'] = 2;
+  $node->field_author[$node->language][0]['tid'] = 1;
+  $node->field_publisher[$node->language][0]['tid'] = 4;
+  $node->field_published_year[$node->language][0]['tid'] = 7;
   node_save($node);
   drupal_json_output($node);
 }
@@ -138,15 +135,8 @@ function book_create()
  */
 function book_update($nid)
 {
-  $query = new EntityFieldQuery();
-  $query->entityCondition('entity_type', 'node')
-    ->entityCondition('bundle', 'book')
-    ->propertyCondition('nid', $nid);
-  $result = $query->execute();
-  if (isset($result['node'])) {
-    $items_nids = array_keys($result['node']);
-    $node = node_load($items_nids[0]);
-    if($node)
+    $node = node_load($nid);
+    if($node && $node->type == 'book')
     {
       $node->title = 'test update book';
 
@@ -160,13 +150,7 @@ function book_update($nid)
       node_save($node);
       drupal_json_output($node);
     }
-    else{print_r("Item not exists");}
-  }
-  else{
-    print_r("Item is not included in book type ");
-  }
-
-
+    else{print_r("Book not exists");}
 }
 
 /**
@@ -174,69 +158,11 @@ function book_update($nid)
  */
 function book_delete($nid)
 {
-  $query = new EntityFieldQuery();
-  $query->entityCondition('entity_type', 'node')
-    ->entityCondition('bundle', 'book')
-    ->propertyCondition('nid', $nid);
-  $result = $query->execute();
-  if (isset($result['node'])) {
-    $items_nids = array_keys($result['node']);
-    $node = node_load($items_nids[0]);
-    if($node)
-    {
-      drupal_json_output($node);
-      node_delete($items_nids);
-    }
-    else{print_r("Item not exists");}
+  $node = node_load($nid);
+  if($node && $node->type == 'book')
+  {
+    drupal_json_output($node);
+    node_delete($nid);
   }
-  else{
-    print_r("Item is not included in book type ");
-  }
+  else{print_r("Book not exists");}
 }
-
-//Look better!
-//function book_index($nid)
-//{
-//  $node = node_load($nid);
-//  $categories = array();
-//  foreach ($node->field_categories[$node->language] as $key => $items){
-//    array_push($categories, taxonomy_term_load($items['tid'])->name);
-//  }
-//  $publisher = taxonomy_term_load($node->field_publisher[$node->language][0]['tid'])->name;
-//  $publishedyear = taxonomy_term_load($node->field_published_year[$node->language][0]['tid'])->name;
-//  $json = array(
-//    'Id' => $node->nid,
-//    'Title' => $node->title,
-//    'Categories' => $categories,
-//    'Publisher' => $publisher,
-//    'Published year' => $publishedyear,
-//  );
-//  drupal_json_output($json);
-//}
-//
-///**
-// * selecting all books
-// */
-//function book_all()
-//{
-//  $nodes = node_load_multiple(array(), array('type' => 'book'));
-//  $datas = array();
-//  foreach ($nodes as $key => $node)
-//  {
-//    $categories = array();
-//    foreach ($node->field_categories[$node->language] as $key => $items){
-//      array_push($categories, taxonomy_term_load($items['tid'])->name);
-//    }
-//    $publisher = taxonomy_term_load($node->field_publisher[$node->language][0]['tid'])->name;
-//    $publishedyear = taxonomy_term_load($node->field_published_year[$node->language][0]['tid'])->name;
-//    $json = array(
-//      'Id' => $node->nid,
-//      'Title' => $node->title,
-//      'Categories' => $categories,
-//      'Publisher' => $publisher,
-//      'Published year' => $publishedyear,
-//    );
-//    array_push($datas, $json);
-//  }
-//  drupal_json_output($datas);
-//}
