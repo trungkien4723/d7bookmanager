@@ -682,23 +682,23 @@
         },
         {
             "name": "drupal/drupal",
-            "version": "7.84.0",
+            "version": "7.85.0",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/drupal.git",
-                "reference": "7.84"
+                "reference": "7.85"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://ftp.drupal.org/files/projects/drupal-7.84.zip",
-                "reference": "7.84",
-                "shasum": "caad23fa064992b3c3ec2840c6ea9c7d308a5e1f"
+                "url": "https://ftp.drupal.org/files/projects/drupal-7.85.zip",
+                "reference": "7.85",
+                "shasum": "da9bfa4c1ab2d4c053fc4db4d15d24f78546f77b"
             },
             "type": "drupal-core",
             "extra": {
                 "drupal": {
-                    "version": "7.84",
-                    "datestamp": "1639410538",
+                    "version": "7.85",
+                    "datestamp": "1642026302",
                     "security-coverage": {
                         "status": "covered",
                         "message": "Covered by Drupal's security advisory policy"
@@ -743,10 +743,6 @@
                     "homepage": "https://www.drupal.org/user/1206650"
                 },
                 {
-                    "name": "drumm",
-                    "homepage": "https://www.drupal.org/user/3064"
-                },
-                {
                     "name": "effulgentsia",
                     "homepage": "https://www.drupal.org/user/78040"
                 },
@@ -761,10 +757,6 @@
                 {
                     "name": "mcdruid",
                     "homepage": "https://www.drupal.org/user/255969"
-                },
-                {
-                    "name": "mlhess",
-                    "homepage": "https://www.drupal.org/user/102818"
                 },
                 {
                     "name": "quietone",
