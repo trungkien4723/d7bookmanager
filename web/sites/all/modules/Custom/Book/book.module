@@ -77,7 +77,7 @@ function book_query_field_alter(QueryAlterableInterface $query)
 /**
  * selecting all books
  */
-function book_all($title = NULL, $author_id = NULL, $categories_ids = NULL, $publisher_id = NULL, $published_year_id = NULL)
+function book_all($request = null)
 {
   $nodes = array();
   $items_per_page = 20;
@@ -86,11 +86,11 @@ function book_all($title = NULL, $author_id = NULL, $categories_ids = NULL, $pub
   $query->entityCondition('entity_type', 'node')
     ->entityCondition('bundle', 'book')
     ->propertyCondition('status', 1);
-  if(!empty($title)){$query->propertyCondition('title', '%'.$title.'%', 'like');}
-  if(!empty($author_id)){$query->fieldCondition('field_author', 'tid', $author_id, '=');}
-  if(!empty($categories_ids)){$query->fieldCondition('field_categories', 'tid', $categories_ids);}
-  if(!empty($publisher_id)){$query->fieldCondition('field_publisher', 'tid', $publisher_id, '=');}
-  if(!empty($published_year_id)){$query->fieldCondition('field_published_year', 'tid', $published_year_id, '=');}
+  if(!empty($request['title'])){$query->propertyCondition('title', '%'.$request['title'].'%', 'like');}
+  if(!empty($request['author'])){$query->fieldCondition('field_author', 'tid', $request['author'], '=');}
+  if(!empty($request['categories'])){$query->fieldCondition('field_categories', 'tid', $request['categories']);}
+  if(!empty($request['publisher'])){$query->fieldCondition('field_publisher', 'tid', $request['publisher'], '=');}
+  if(!empty($request['published_year'])){$query->fieldCondition('field_published_year', 'tid', $request['published_year'], '=');}
 
   $clone_query = clone $query;
   $total = intval($clone_query->count()->execute());
