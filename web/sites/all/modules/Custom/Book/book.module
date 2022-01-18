@@ -61,7 +61,8 @@ function book_index($nid)
 {
   $node = node_load($nid);
 
-  drupal_json_output(book_fields_render($node));
+  if($node){drupal_json_output(book_fields_render($node));}
+  else{print("Book not exists");}
 }
 
 /**
@@ -197,6 +198,7 @@ function books_fields_render($nodes){
   if($nodes){
     $data = array();
     foreach ($nodes as $node){
+      $author = taxonomy_term_load($node->field_author[$node->language][0]['tid'])->name;
       $categories = array();
       foreach ($node->field_categories[$node->language] as $key => $items){
         array_push($categories, taxonomy_term_load($items['tid'])->name);
@@ -206,6 +208,7 @@ function books_fields_render($nodes){
       $json = array(
         'id' => $node->nid,
         'Title' => $node->title,
+        'Author' => $author,
         'Categories' => $categories,
         'Publisher' => $publisher,
         'Published year' => $publishedyear,
@@ -223,6 +226,7 @@ function book_fields_render($node){
   if($node){
     $data = array();
 
+    $author = taxonomy_term_load($node->field_author[$node->language][0]['tid'])->name;
     $categories = array();
     foreach ($node->field_categories[$node->language] as $key => $items){
       array_push($categories, taxonomy_term_load($items['tid'])->name);
@@ -232,6 +236,7 @@ function book_fields_render($node){
     $json = array(
       'id' => $node->nid,
       'Title' => $node->title,
+      'Author' => $author,
       'Categories' => $categories,
       'Publisher' => $publisher,
       'Published year' => $publishedyear,
