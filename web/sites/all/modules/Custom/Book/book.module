@@ -1,7 +1,4 @@
 <?php
-
-
-
 /**
  * Implements hook_menu().
  */
@@ -27,39 +24,34 @@ function book_menu()
  * process functions by method
  */
 function process_book_request($nid){
+  $request = OAuth2\Request::createFromGlobals();
 
   switch (strtoupper($_SERVER['REQUEST_METHOD'])){
     case 'GET':
       book_index($nid);
       break;
     case 'POST':
-      $data = file_get_contents('php://input');
-      $request = json_decode($data, TRUE);
-      book_update($nid, $request);
+      book_update($nid, $request->request);
       break;
     case 'DELETE':
       book_delete($nid);
       break;
   }
-
 }
 
 /**
  * process functions by method
  */
 function process_books_request(){
-
-  switch (strtoupper($_SERVER['REQUEST_METHOD'])){
+  $request = OAuth2\Request::createFromGlobals();
+  switch (strtoupper($request->server['REQUEST_METHOD'])){
     case 'GET':
-      book_all();
+      book_all($_REQUEST);
       break;
     case 'POST':
-      $data = file_get_contents('php://input');
-      $request = json_decode($data, TRUE);
-      book_create($request);
+      book_create($request->request);
       break;
   }
-
 }
 
 /**
@@ -68,59 +60,36 @@ function process_books_request(){
 function book_index($nid)
 {
   $node = node_load($nid);
-  $categories = array();
-  foreach ($node->field_categories[$node->language] as $key => $items){
-    array_push($categories, taxonomy_term_load($items['tid'])->name);
-  }
-  $publisher = taxonomy_term_load($node->field_publisher[$node->language][0]['tid'])->name;
-  $publishedyear = taxonomy_term_load($node->field_published_year[$node->language][0]['tid'])->name;
-  $node_data = array(
-    'Id' => $node->nid,
-    'Title' => $node->title,
-    'Categories' => $categories,
-    'Publisher' => $publisher,
-    'Published year' => $publishedyear,
-  );
-  drupal_json_output($node_data);
+
+  if($node){drupal_json_output(book_fields_render($node));}
+  else{print("Book not exists");}
 }
 
 /**
  * selecting all books
  */
-function book_all()
+function book_all($request = null)
 {
   $nodes = array();
-  $node_data = array();
   $items_per_page = 20;
   $current_page = isset($_GET['page']) ? $_GET['page'] : 1;
   $query = new EntityFieldQuery();
   $query->entityCondition('entity_type', 'node')
     ->entityCondition('bundle', 'book')
     ->propertyCondition('status', 1);
+  if(!empty($request['title'])){$query->propertyCondition('title', '%'.$request['title'].'%', 'like');}
+  if(!empty($request['author'])){$query->fieldCondition('field_author', 'tid', $request['author']);}
+  if(!empty($request['categories'])){$query->fieldCondition('field_categories', 'tid', $request['categories']);}
+  if(!empty($request['publisher'])){$query->fieldCondition('field_publisher', 'tid', $request['publisher']);}
+  if(!empty($request['published_year'])){$query->fieldCondition('field_published_year', 'tid', $request['published_year']);}
 
   $clone_query = clone $query;
   $total = intval($clone_query->count()->execute());
   $result = $query->range(($current_page - 1) * $items_per_page ,$items_per_page)->execute();
+
   if (isset($result['node'])) {
     $items_nids = array_keys($result['node']);
     $nodes = node_load_multiple($items_nids);
-    foreach ($nodes as $key => $node)
-    {
-      $categories = array();
-      foreach ($node->field_categories[$node->language] as $key => $items){
-        array_push($categories, taxonomy_term_load($items['tid'])->name);
-      }
-      $publisher = taxonomy_term_load($node->field_publisher[$node->language][0]['tid'])->name;
-      $publishedyear = taxonomy_term_load($node->field_published_year[$node->language][0]['tid'])->name;
-      $json = array(
-        'Id' => $node->nid,
-        'Title' => $node->title,
-        'Categories' => $categories,
-        'Publisher' => $publisher,
-        'Published year' => $publishedyear,
-      );
-      array_push($node_data, $json);
-    }
   }
 
   $current_path = url(current_path(), array('absolute' => true));
@@ -141,7 +110,7 @@ function book_all()
         ),
       )
     ),
-    'data' => $node_data,
+    'data' => books_fields_render($nodes),
   );
 
   drupal_json_output($data);
@@ -150,7 +119,7 @@ function book_all()
 /**
  * create a book
  */
-function book_create($request)
+function book_create($request = null)
 {
   $node = new stdClass();
   $node->type = 'book';
@@ -166,7 +135,7 @@ function book_create($request)
   //Categories
   $node->field_categories[$node->language] = array();
   foreach ($request['categories'] as $category){
-    $node->field_categories[$node->language][] = ['tid' => $category];
+    $node->field_categories[$node->language][] = array('tid' => $category);
   }
   //Author
   $node->field_author[$node->language][0]['tid'] = $request['author'];
@@ -182,7 +151,7 @@ function book_create($request)
 /**
  * edit infomations of a book
  */
-function book_update($nid, $request)
+function book_update($nid, $request = null)
 {
   $node = node_load($nid);
   if($node && $node->type == 'book')
@@ -194,7 +163,7 @@ function book_update($nid, $request)
     //Categories
     $node->field_categories[$node->language] = array();
     foreach ($request['categories'] as $category){
-      $node->field_categories[$node->language][] = ['tid' => $category];
+      $node->field_categories[$node->language][] = array('tid' => $category);
     }
     //Author
     $node->field_author[$node->language][0]['tid'] = $request['author'];
@@ -220,4 +189,60 @@ function book_delete($nid)
     node_delete($nid);
   }
   else{print_r("Book not exists");}
+}
+
+/**
+ * Display fields of multiple books
+ */
+function books_fields_render($nodes){
+  if($nodes){
+    $data = array();
+    foreach ($nodes as $node){
+      $author = taxonomy_term_load($node->field_author[$node->language][0]['tid'])->name;
+      $categories = array();
+      foreach ($node->field_categories[$node->language] as $key => $items){
+        array_push($categories, taxonomy_term_load($items['tid'])->name);
+      }
+      $publisher = taxonomy_term_load($node->field_publisher[$node->language][0]['tid'])->name;
+      $publishedyear = taxonomy_term_load($node->field_published_year[$node->language][0]['tid'])->name;
+      $json = array(
+        'id' => $node->nid,
+        'Title' => $node->title,
+        'Author' => $author,
+        'Categories' => $categories,
+        'Publisher' => $publisher,
+        'Published year' => $publishedyear,
+      );
+      array_push($data, $json);
+    }
+    return $data;
+  }
+}
+
+/**
+ * Display fields of a book
+ */
+function book_fields_render($node){
+  if($node){
+    $data = array();
+
+    $author = taxonomy_term_load($node->field_author[$node->language][0]['tid'])->name;
+    $categories = array();
+    foreach ($node->field_categories[$node->language] as $key => $items){
+      array_push($categories, taxonomy_term_load($items['tid'])->name);
+    }
+    $publisher = taxonomy_term_load($node->field_publisher[$node->language][0]['tid'])->name;
+    $publishedyear = taxonomy_term_load($node->field_published_year[$node->language][0]['tid'])->name;
+    $json = array(
+      'id' => $node->nid,
+      'Title' => $node->title,
+      'Author' => $author,
+      'Categories' => $categories,
+      'Publisher' => $publisher,
+      'Published year' => $publishedyear,
+    );
+    array_push($data, $json);
+
+    return $data;
+  }
 }
